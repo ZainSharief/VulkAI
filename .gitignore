@@ -1,0 +1,13 @@
+# Executable files
+*.exe
+build.sh
+main
+
+# Debugging files
+*.dSYM
+
+# IDE files
+.vscode
+
+# Byte Compiled files
+.DS_Store
