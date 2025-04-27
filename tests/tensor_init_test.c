@@ -9,6 +9,9 @@ int main()
     Tensor* newTensor = AI_InitFullTensor(shape, 3, &fill_value, TENSOR_f32, TENSOR_CPU, false, TENSOR_f32);
     Tensor* deepcopy = AI_CopyTensor(newTensor, TENSOR_CPU);
 
+    AI_PrintTensor(newTensor);
+    AI_PrintTensor(deepcopy);
+
     AI_DestroyTensor(newTensor);
     AI_DestroyTensor(deepcopy);
     return 0;
