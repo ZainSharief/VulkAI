@@ -4,11 +4,63 @@
 
 void printType(void* data, AI_TensorDType dtype);
 void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data, int dataSize, AI_TensorDType dtype, size_t dtype_size);
+void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size);
+
+Tensor* AI_IndexTensor(Tensor* tensor, uint8_t* indices)
+{
+    Tensor* newTensor = AI_InitLikeTensor(tensor, tensor->device);
+
+    void* data;
+    uint8_t shape[tensor->dims];
+    uint32_t strides[tensor->dims];
+    
+    for (int i = 0; i < tensor->dims; i++) {
+        strides[i] = 1;
+        for (int j = i + 1; j < tensor->dims; j++) {
+            strides[i] *= tensor->shape[j];
+        }
+    }
+
+    size_t total = 1;
+    for (int i = 0; i < tensor->dims; i++) {
+        uint8_t start = indices[i * 3];
+        uint8_t stop = indices[i * 3 + 1];
+        uint8_t step = indices[i * 3 + 2];
+
+        shape[i] = ((stop - start) / step);
+        total *= shape[i];
+    }
+    data = malloc(total * tensor->dtype_size);
+
+    uint32_t dataIndex = 0;
+    recursiveCopy(data, &dataIndex, tensor->data, 0, indices, shape, strides, tensor->dims, 0, tensor->dtype_size);
+
+    newTensor->data = data;
+    newTensor->shape = malloc(tensor->dims * sizeof(uint8_t));
+    memcpy(newTensor->shape, shape, tensor->dims * sizeof(uint8_t));
+
+    return newTensor;
+}
+
+void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size)
+{
+    if (currentDim == dims - 1) {
+        memcpy(data + (*dataIndex * dtype_size), oldData + (oldDataIndex * dtype_size), shape[currentDim] * dtype_size);
+        (*dataIndex) += shape[currentDim];
+        return;
+    }
+
+    uint8_t start = indices[currentDim * 3];
+    uint8_t stop = indices[currentDim * 3 + 1];
+    uint8_t step = indices[currentDim * 3 + 2];
+    
+    for  (int i = start; i < stop; i += step) {
+        recursiveCopy(data, dataIndex, oldData, oldDataIndex + (strides[currentDim] * i), indices, shape, strides, dims, currentDim + 1, dtype_size);
+    }
+}
 
 void AI_PrintTensor(Tensor* tensor)
 {
-    if (!tensor) return;
-
     printf("Shape: (");
     for (int i = 0; i < tensor->dims; i++) {
         printf("%d", tensor->shape[i]);

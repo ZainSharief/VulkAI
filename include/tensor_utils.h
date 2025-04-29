@@ -4,5 +4,6 @@
 #include "tensor_init.h"
 
 void AI_PrintTensor(Tensor* tensor);
+Tensor* AI_IndexTensor(Tensor* tensor, uint8_t* indices);
 
 #endif

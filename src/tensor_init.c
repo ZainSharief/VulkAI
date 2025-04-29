@@ -1,6 +1,6 @@
 #include "tensor_init.h"
 
-size_t AI_TensorDTypeSize(AI_TensorDType dtype);
+size_t tensorDTypeSize(AI_TensorDType dtype);
 
 Tensor* AI_InitTensor(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, void* grad, AI_TensorDType grad_dtype)
 {
@@ -10,19 +10,20 @@ Tensor* AI_InitTensor(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType d
     tensor->data = data;
     tensor->dims = dims;
 
-    // copies the given shape into the tensor
-    tensor->shape = (uint8_t*)malloc(dims * sizeof(uint8_t));
-    memcpy(tensor->shape, shape, dims * sizeof(uint8_t));
-
+    if (shape != NULL) {
+        tensor->shape = (uint8_t*)malloc(dims * sizeof(uint8_t));
+        memcpy(tensor->shape, shape, dims * sizeof(uint8_t));
+    }
+    
     tensor->dtype = dtype;
-    tensor->dtype_size = AI_TensorDTypeSize(dtype);
+    tensor->dtype_size = tensorDTypeSize(dtype);
     tensor->device = device;
 
     tensor->requires_grad = requires_grad;
     tensor->grad = grad;
 
     tensor->grad_dtype = grad_dtype;
-    tensor->grad_dtype_size = AI_TensorDTypeSize(grad_dtype);
+    tensor->grad_dtype_size = tensorDTypeSize(grad_dtype);
 
     return tensor;
 }
@@ -31,13 +32,20 @@ Tensor* AI_InitFullTensor(uint8_t* shape, uint8_t dims, void* fill_value, AI_Ten
 {
     Tensor* tensor = AI_InitTensor(NULL, shape, dims, dtype, device, requires_grad, NULL, grad_dtype);
 
-    int total = 1;
+    size_t total = 1;
     for (int i = 0; i < dims; i++) total *= shape[i];
 
-    // TODO: could be done with block memcpy
-    void* data = malloc(total * tensor->dtype_size);
-    for (int i = 0; i < total; i++) {
-        memcpy(data + i * tensor->dtype_size, fill_value, tensor->dtype_size);
+    void* data = malloc(total * tensor->dtype_size);    
+
+    // Fill the first element with the fill value
+    memcpy(data, fill_value, tensor->dtype_size);
+
+    // Exponentially fill the rest of the tensor -> O(logn) 
+    size_t filled = 1;
+    while (filled < total) {
+        size_t copyNum = (filled < (total - filled)) ? filled : (total - filled);
+        memcpy(data + filled * tensor->dtype_size, data, copyNum * tensor->dtype_size);
+        filled += copyNum;
     }
     tensor->data = data;
 
@@ -70,6 +78,17 @@ Tensor* AI_InitZerosTensor(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, A
     return tensor;
 }
 
+Tensor* AI_InitLikeTensor(Tensor* other, AI_TensorDevice device)
+{
+    void* data = NULL;
+    void* grad = NULL;
+    uint8_t* shape = NULL;
+
+    Tensor* tensor = AI_InitTensor(data, shape, other->dims, other->dtype, device, other->requires_grad, grad, other->grad_dtype);
+
+    return tensor;
+}
+
 Tensor* AI_CopyTensor(Tensor* other, AI_TensorDevice device)
 {
     void* data = NULL;
@@ -84,7 +103,7 @@ Tensor* AI_CopyTensor(Tensor* other, AI_TensorDevice device)
         memcpy(data, other->data, total * other->dtype_size);
     }
     if (other->grad != NULL) {
-        grad = malloc(total * other->dtype_size);
+        grad = malloc(total * other->grad_dtype_size);
         memcpy(grad, other->grad, total * other->grad_dtype_size);
     }
     
@@ -96,7 +115,7 @@ Tensor* AI_CopyTensor(Tensor* other, AI_TensorDevice device)
     return tensor;
 }
 
-size_t AI_TensorDTypeSize(AI_TensorDType dtype)
+size_t tensorDTypeSize(AI_TensorDType dtype)
 {
     switch (dtype) {
         case TENSOR_f32: return sizeof(float);
@@ -108,8 +127,6 @@ size_t AI_TensorDTypeSize(AI_TensorDType dtype)
 
 void AI_DestroyTensor(Tensor* tensor)
 {
-    if (!tensor) return;
-
     free(tensor->data);
     free(tensor->grad);
     free(tensor->shape);

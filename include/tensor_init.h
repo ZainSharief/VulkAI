@@ -45,6 +45,7 @@ Tensor* AI_InitTensor(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType d
 Tensor* AI_InitFullTensor(uint8_t* shape, uint8_t dims, void* fill_value, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype);
 Tensor* AI_InitEmptyTensor(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype);
 Tensor* AI_InitZerosTensor(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype);
+Tensor* AI_InitLikeTensor(Tensor* other, AI_TensorDevice device);
 Tensor* AI_CopyTensor(Tensor* other, AI_TensorDevice device);
 
 void AI_DestroyTensor(Tensor* tensor);
