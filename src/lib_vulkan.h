@@ -10,9 +10,20 @@ struct VulkanContext
 	VkDevice device;
 	VkQueue queue;
 	uint32_t queueFamilyIndex;
+	VkCommandPool commandPool;
 };
 typedef struct VulkanContext VulkanContext;
 
+struct VulkanBuffer
+{
+	VkBuffer data;
+	VkDeviceMemory address;
+	size_t size;
+};
+typedef struct GPUBuffer GPUBuffer;
+
 VulkanContext* get_VkContext();
+VulkanBuffer createGPUBuffer(size_t data_size);
+void uploadToGPUBuffer(GPUBuffer* buffer, void* data, size_t size);
 
 #endif

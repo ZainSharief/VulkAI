@@ -68,6 +68,17 @@ void init_Vulkan()
 
 	check_vk(vkCreateDevice(vkctx->physicalDevice, &deviceInfo, NULL, &vkctx->device));
 	vkGetDeviceQueue(vkctx->device, vkctx->queueFamilyIndex, 0, &vkctx->queue);
+
+	VkCommandPoolCreateInfo poolInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.queueFamilyIndex = vkctx->queueFamilyIndex,
+		.flags = VK_COMMAND_POOOL_CREATE_TRANSIENT_BIT
+	};
+
+	VkCommandPool commandPool;
+	vkCreateCommandPool(vkctx->device, &poolInfo, NULL, &commandPool);
+	vkctx->commandPool = commandPool;
 }
 
 void AI_Init()
