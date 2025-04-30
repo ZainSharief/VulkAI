@@ -1,14 +1,15 @@
 #include "tensor_utils.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void printType(void* data, AI_TensorDType dtype);
 void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data, int dataSize, AI_TensorDType dtype, size_t dtype_size);
 void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size);
 
-Tensor* AI_IndexTensor(Tensor* tensor, uint8_t* indices)
+Tensor* VML_IndexTensor(Tensor* tensor, uint8_t* indices)
 {
-    Tensor* newTensor = AI_InitLikeTensor(tensor, tensor->device);
+    Tensor* newTensor = VML_InitLikeTensor(tensor, tensor->device);
 
     void* data;
     uint8_t shape[tensor->dims];
@@ -59,7 +60,7 @@ void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldD
     }
 }
 
-void AI_PrintTensor(Tensor* tensor)
+void VML_PrintTensor(Tensor* tensor)
 {
     printf("Shape: (");
     for (int i = 0; i < tensor->dims; i++) {
