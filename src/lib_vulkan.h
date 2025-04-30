@@ -1,0 +1,18 @@
+#ifndef _AI_LIB_VULKAN_
+#define _AI_LIB_VULKAN_
+
+#include <vulkan/vulkan.h>
+
+struct VulkanContext
+{	
+	VkInstance instance;
+	VkPhysicalDevice physicalDevice;
+	VkDevice device;
+	VkQueue queue;
+	uint32_t queueFamilyIndex;
+};
+typedef struct VulkanContext VulkanContext;
+
+VulkanContext* get_VkContext();
+
+#endif
