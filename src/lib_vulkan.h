@@ -1,5 +1,5 @@
-#ifndef _AI_LIB_VULKAN_
-#define _AI_LIB_VULKAN_
+#ifndef LIB_VULKAN_H
+#define LIB_VULKAN_H
 
 #include <vulkan/vulkan.h>
 

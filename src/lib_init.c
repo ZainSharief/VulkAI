@@ -1,5 +1,5 @@
-#include "ai_init.h"
-#include "ai_vulkan.h"
+#include "lib_init.h"
+#include "lib_vulkan.h"
 
 void init_Vulkan()
 {
@@ -56,7 +56,7 @@ void init_Vulkan()
 		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 		.queueFamilyIndex = vkctx->queueFamilyIndex,
 		.queueCount = 1,
-		.pQueueProperties = &queuePriority
+		.pQueuePriorities = &queuePriority
 	};
 
 	VkDeviceCreateInfo deviceInfo = 

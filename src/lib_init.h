@@ -1,5 +1,5 @@
-#ifndef _AI_LIB_INIT_
-#define _AI_LIB_INIT_
+#ifndef LIB_INIT_H
+#define LIB_INIT_H
 
 void AI_Init();	
 

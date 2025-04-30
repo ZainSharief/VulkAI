@@ -1,6 +1,6 @@
-#ifndef _AI_LIB_
-#define _AI_LIB_
+#ifndef VULKML_H
+#define VULKML_H
 
-#include "../src/init.h"
+#include "lib_init.h"
 
 #endif
