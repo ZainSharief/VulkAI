@@ -1,5 +1,5 @@
-#include "tensor/tensor_utils.h"
-#include "tensor/tensor_init.h"
+#include "tensor_utils.h"
+#include "tensor_init.h"
 
 #include <stdio.h>
 

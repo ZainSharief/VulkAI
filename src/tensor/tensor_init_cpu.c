@@ -21,10 +21,10 @@ Tensor* initTensorCPU(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType d
 
     tensor->requires_grad = requires_grad;
     tensor->grad = grad;
-
+        
     tensor->grad_dtype = grad_dtype;
     tensor->grad_dtype_size = tensorDTypeSize(grad_dtype);
-
+    
     return tensor;
 }
 
@@ -44,7 +44,7 @@ Tensor* initFullTensorCPU(uint8_t* shape, uint8_t dims, void* fill_value, AI_Ten
     size_t filled = 1;
     while (filled < total) {
         size_t copyNum = (filled < (total - filled)) ? filled : (total - filled);
-        memcpy(data + filled * tensor->dtype_size, data, copyNum * tensor->dtype_size);
+        memcpy((char*)data + filled * tensor->dtype_size, data, copyNum * tensor->dtype_size);
         filled += copyNum;
     }
     tensor->data = data;
@@ -117,8 +117,19 @@ Tensor* copyTensorCPU(Tensor* other, AI_TensorDevice device)
 
 void destroyTensorCPU(Tensor* tensor)
 {
-    free(tensor->data);
-    free(tensor->grad);
-    free(tensor->shape);
+    if (tensor == NULL) {
+        return;
+    }
+
+    if (tensor->data != NULL) {
+        free(tensor->data);
+    }
+    if (tensor->grad != NULL) {
+        free(tensor->grad);
+    }
+    if (tensor->shape != NULL) {
+        free(tensor->shape);
+    }
+    
     free(tensor);
 }

@@ -5,7 +5,7 @@
 
 void printType(void* data, AI_TensorDType dtype);
 void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data, int dataSize, AI_TensorDType dtype, size_t dtype_size);
-void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size);
+void recursiveIndex(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size);
 
 Tensor* VML_IndexTensor(Tensor* tensor, uint8_t* indices)
 {
@@ -34,7 +34,7 @@ Tensor* VML_IndexTensor(Tensor* tensor, uint8_t* indices)
     data = malloc(total * tensor->dtype_size);
 
     uint32_t dataIndex = 0;
-    recursiveCopy(data, &dataIndex, tensor->data, 0, indices, shape, strides, tensor->dims, 0, tensor->dtype_size);
+    recursiveIndex(data, &dataIndex, tensor->data, 0, indices, shape, strides, tensor->dims, 0, tensor->dtype_size);
 
     newTensor->data = data;
     newTensor->shape = malloc(tensor->dims * sizeof(uint8_t));
@@ -43,10 +43,10 @@ Tensor* VML_IndexTensor(Tensor* tensor, uint8_t* indices)
     return newTensor;
 }
 
-void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size)
+void recursiveIndex(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldDataIndex, uint8_t* indices, uint8_t* shape, uint32_t* strides, uint8_t dims, uint8_t currentDim, size_t dtype_size)
 {
     if (currentDim == dims - 1) {
-        memcpy(data + (*dataIndex * dtype_size), oldData + (oldDataIndex * dtype_size), shape[currentDim] * dtype_size);
+        memcpy((char*)data + (*dataIndex * dtype_size), (char*)oldData + (oldDataIndex * dtype_size), shape[currentDim] * dtype_size);
         (*dataIndex) += shape[currentDim];
         return;
     }
@@ -56,7 +56,7 @@ void recursiveCopy(void* data, uint32_t* dataIndex, void* oldData, uint32_t oldD
     uint8_t step = indices[currentDim * 3 + 2];
     
     for  (int i = start; i < stop; i += step) {
-        recursiveCopy(data, dataIndex, oldData, oldDataIndex + (strides[currentDim] * i), indices, shape, strides, dims, currentDim + 1, dtype_size);
+        recursiveIndex(data, dataIndex, oldData, oldDataIndex + (strides[currentDim] * i), indices, shape, strides, dims, currentDim + 1, dtype_size);
     }
 }
 
@@ -84,18 +84,18 @@ void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data
 
         if (currDimSize > 4) {
             for (int i = 0; i < 2; i++) {
-                printType((data + i * dtype_size), dtype);
+                printType(((char*)data + i * dtype_size), dtype);
                 printf(", ");
             }
             printf(" ... ");
             for (int i = currDimSize-2; i < currDimSize; i++) {
-                printType((data + i * dtype_size), dtype);
+                printType(((char*)data + i * dtype_size), dtype);
                 if (i != currDimSize-1) printf(", ");
             }
         }
         else {
             for (int i = 0; i < currDimSize; i++) {
-                printType((data + i * dtype_size), dtype);
+                printType(((char*)data + i * dtype_size), dtype);
                 if (i != currDimSize-1) printf(", ");
             }
         }
@@ -107,14 +107,14 @@ void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data
         if (currDimSize > 8) {
             for (int i = 0; i < 4; i++) {
                 if (currentDim == 0 && i > 0) printf("\n");
-                void* newData = data + i * dtype_size * dataSize;
+                void* newData = (char*)data + i * dtype_size * dataSize;
                 recursivePrint(shape, currentDim + 1, dims, newData, dataSize, dtype, dtype_size);
                 printf(", \n");
             }
             printf("  ... \n");
             for (int i = currDimSize-4; i < currDimSize; i++) {
                 if (currentDim == 0 && i > currDimSize-4) printf("\n");
-                void* newData = data + i * dtype_size * dataSize;
+                void* newData = (char*)data + i * dtype_size * dataSize;
                 recursivePrint(shape, currentDim + 1, dims, newData, dataSize, dtype, dtype_size);
                 if (i != currDimSize-1) printf(", \n");
             }
@@ -122,7 +122,7 @@ void recursivePrint(uint8_t* shape, uint8_t currentDim, uint8_t dims, void* data
         else {
             for (int i = 0; i < currDimSize; i++) {
                 if (currentDim == 0 && i > 0) printf("\n");
-                void* newData = data + i * dtype_size * dataSize;
+                void* newData = (char*)data + i * dtype_size * dataSize;
                 recursivePrint(shape, currentDim + 1, dims, newData, dataSize, dtype, dtype_size);
                 if (i != currDimSize-1) printf(", \n");
             }
