@@ -2,12 +2,19 @@
 
 #include <string.h>
 
-Tensor* initTensorCPU(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, void* grad, AI_TensorDType grad_dtype)
+//helper gets data size given a shape, dims, dtype - 64bit allows for tensors >4.3GB
+uint64_t getDataSize(uint8_t* shape, uint8_t dims, AI_TensorDType dtype)
+{
+	uint64_t size;
+	for (int s = 0; s < dims; s++) size *= shape[s];
+	return size * tensorDTypeSize(dtype);
+}
+
+Tensor* initTensor(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, void* grad, AI_TensorDType grad_dtype)
 {
     Tensor* tensor;
     tensor = malloc(sizeof(Tensor));
 
-    tensor->data = data;
     tensor->dims = dims;
 
     if (shape != NULL) {
@@ -17,20 +24,37 @@ Tensor* initTensorCPU(void* data, uint8_t* shape, uint8_t dims, AI_TensorDType d
     
     tensor->dtype = dtype;
     tensor->dtype_size = tensorDTypeSize(dtype);
-    tensor->device = device;
 
     tensor->requires_grad = requires_grad;
     tensor->grad = grad;
         
     tensor->grad_dtype = grad_dtype;
     tensor->grad_dtype_size = tensorDTypeSize(grad_dtype);
-    
+
+	tensor->device = device;
+	uint64_t size = getDataSize(shape, dims, dtype);
+	switch (device)
+	{
+		case TENSOR_CPU:
+			//heap allocation ensures tensor can outlive user generated data
+			tensor->data = malloc(size);
+			memcpy(tensor->data, data, size);
+			tensor->gpuBuffer = NULL;
+			break;
+		case TENSOR_GPU_VULKAN:
+			tensor->gpuBuffer = (GPUBuffer*)malloc(sizeof(GPUBuffer));
+			*tensor->gpuBuffer = createGPUBuffer(size);
+			uploadToGPUBuffer(tensor->gpuBuffer, data, size);
+			tensor->data = NULL;
+			break;
+	}
+
     return tensor;
 }
 
-Tensor* initFullTensorCPU(uint8_t* shape, uint8_t dims, void* fill_value, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
+Tensor* initFullTensor(uint8_t* shape, uint8_t dims, void* fill_value, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
 {
-    Tensor* tensor = initTensorCPU(NULL, shape, dims, dtype, device, requires_grad, NULL, grad_dtype);
+    Tensor* tensor = initTensor(NULL, shape, dims, dtype, device, requires_grad, NULL, grad_dtype);
 
     size_t total = 1;
     for (int i = 0; i < dims; i++) total *= shape[i];
@@ -52,7 +76,7 @@ Tensor* initFullTensorCPU(uint8_t* shape, uint8_t dims, void* fill_value, AI_Ten
     return tensor;
 }
 
-Tensor* initEmptyTensorCPU(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
+Tensor* initEmptyTensor(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
 {
     Tensor* tensor = initTensorCPU(NULL, shape, dims, dtype, device, requires_grad, NULL, grad_dtype);
 
@@ -65,7 +89,7 @@ Tensor* initEmptyTensorCPU(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, A
     return tensor;
 }
 
-Tensor* initZerosTensorCPU(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
+Tensor* initZerosTensor(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, AI_TensorDevice device, bool requires_grad, AI_TensorDType grad_dtype)
 {
     Tensor* tensor = initTensorCPU(NULL, shape, dims, dtype, device, requires_grad, NULL, grad_dtype);
 
@@ -78,7 +102,7 @@ Tensor* initZerosTensorCPU(uint8_t* shape, uint8_t dims, AI_TensorDType dtype, A
     return tensor;
 }
 
-Tensor* initLikeTensorCPU(Tensor* other, AI_TensorDevice device)
+Tensor* initLikeTensor(Tensor* other, AI_TensorDevice device)
 {
     void* data = NULL;
     void* grad = NULL;
@@ -115,7 +139,7 @@ Tensor* copyTensorCPU(Tensor* other, AI_TensorDevice device)
     return tensor;
 }
 
-void destroyTensorCPU(Tensor* tensor)
+void destroyTensor(Tensor* tensor)
 {
     if (tensor == NULL) {
         return;

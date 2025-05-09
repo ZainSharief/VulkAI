@@ -23,7 +23,7 @@ struct VulkanBuffer
 typedef struct GPUBuffer GPUBuffer;
 
 VulkanContext* get_VkContext();
-VulkanBuffer createGPUBuffer(size_t data_size);
+GPUBuffer createGPUBuffer(size_t data_size);
 void uploadToGPUBuffer(GPUBuffer* buffer, void* data, size_t size);
 
 #endif

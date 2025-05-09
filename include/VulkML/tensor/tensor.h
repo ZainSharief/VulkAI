@@ -8,6 +8,7 @@
 
 typedef struct Tensor {
     void* data;
+	GPUBuffer* gpuBuffer;
 
     uint8_t dims;
     uint8_t* shape;
